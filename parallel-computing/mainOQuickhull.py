@@ -2,15 +2,15 @@ import matplotlib.pyplot as plt
 import csv
 import time
 import concurrent.futures as cf
+import pandas as pd
 
 # Read input points.
 input_points = []
 dataset = []
 
-with open("200.csv") as f:
-    csv_reader = csv.reader(f, delimiter=",")
-    for row in csv_reader:
-        input_points = input_points + [[float(row[0]), float(row[1])]]
+chunksize = 10 ** 8
+for chunk in pd.read_csv("./discs/10000.csv", chunksize=chunksize):
+    input_points = chunk.values.tolist()
 
 def find_extreme_points(points):
     maxY = points[0][1]
@@ -143,7 +143,7 @@ def findOCH(set, q, qq, quad):
             qs = [new_point, q]
             qqs = [qq, new_point]
             
-        with cf.ThreadPoolExecutor(max_workers=2) as executor:
+        with cf.ProcessPoolExecutor(max_workers=2) as executor:
             results = executor.map(findOCH, sets, qs, qqs, quads)
 
             for result in results:
@@ -179,16 +179,7 @@ def findOrthogonalConvexHull_serial(points):
     set2 = []
     set3 = []
     set4 = []
-    
-    # for p in points:
-    #     if p[0] <= q1[0] and p[1] >= qq1[1]:
-    #         set1.append(p)
-    #     if p[0] <= qq2[0] and p[1] <= q2[1]:
-    #         set2.append(p)
-    #     if p[0] >= q3[0] and p[1] <= qq3[1]:
-    #         set3.append(p)
-    #     if p[0] >= qq4[0] and p[1] >= q4[1]:
-    #         set4.append(p)
+
     for p in points:
         if p[0] < q1[0] and p[1] > qq1[1]:
             set1.append(p)
@@ -238,16 +229,6 @@ def findOrthogonalConvexHull_multhr(points):
     set2 = []
     set3 = []
     set4 = []
-
-    # for p in points:
-    #     if p[0] <= q1[0] and p[1] >= qq1[1]:
-    #         set1.append(p)
-    #     if p[0] <= qq2[0] and p[1] <= q2[1]:
-    #         set2.append(p)
-    #     if p[0] >= q3[0] and p[1] <= qq3[1]:
-    #         set3.append(p)
-    #     if p[0] >= qq4[0] and p[1] >= q4[1]:
-    #         set4.append(p)
 
     for p in points:
         if p[0] < q1[0] and p[1] > qq1[1]:
@@ -320,7 +301,7 @@ def findOrthogonalConvexHull_mulprc(points):
     qqs = [q1, qq2, q3, qq4]
     quads = [2, 3, 4, 1]
 
-    with cf.ProcessPoolExecutor(max_workers=5) as executor:
+    with cf.ProcessPoolExecutor(max_workers=4) as executor:
         results = executor.map(find_o_hull, sets, qs, qqs, quads)
 
         for result in results:
@@ -384,6 +365,7 @@ if __name__ == '__main__':
     points = findOrthogonalConvexHull_serial(input_points)
     # Time measurement ends here
     finish = time.perf_counter()
+    print("Serial")
     print(f"Algorithm running time: {round(finish - start, 5)} seconds.")
     plotOCH(points)
     
@@ -393,5 +375,6 @@ if __name__ == '__main__':
     points = findOrthogonalConvexHull_multhr(input_points)
     # Time measurement ends here
     finish = time.perf_counter()
+    print("Multi-threading")
     print(f"Algorithm running time: {round(finish - start, 5)} seconds.")
     plotOCH(points)
