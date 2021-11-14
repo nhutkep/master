@@ -143,7 +143,7 @@ def findOCH(set, q, qq, quad):
             qs = [new_point, q]
             qqs = [qq, new_point]
             
-        with cf.ProcessPoolExecutor(max_workers=2) as executor:
+        with cf.ThreadPoolExecutor(max_workers=2) as executor:
             results = executor.map(findOCH, sets, qs, qqs, quads)
 
             for result in results:
